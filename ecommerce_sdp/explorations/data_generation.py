@@ -8,7 +8,6 @@
 # MAGIC
 # MAGIC This will generate dummy data
 # MAGIC
-# MAGIC **Note**: This notebook is not executed as part of the pipeline.
 
 # COMMAND ----------
 
@@ -31,4 +30,6 @@ for i in range(1, 5001):
     })
 orders_df = spark.createDataFrame(order_data)
 orders_df.write.mode("overwrite").option("header", "true").csv(f"{volume_path}/orders/")
+
+##Git Checkin
 
