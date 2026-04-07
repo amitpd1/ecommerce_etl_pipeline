@@ -4,7 +4,7 @@
 # environment_version = "2"
 # ///
 # MAGIC %md
-# MAGIC ### Thi ill generate dummy data
+# MAGIC ### This will generate dummy data
 # MAGIC
 # MAGIC This will generate dummy data
 # MAGIC
@@ -32,4 +32,53 @@ orders_df = spark.createDataFrame(order_data)
 orders_df.write.mode("overwrite").option("header", "true").csv(f"{volume_path}/orders/")
 
 ##Git Checkin
+
+
+# COMMAND ----------
+
+from datetime import datetime, timedelta
+import random
+
+# 3. Generate Customers (500 rows)
+volume_path = "/Volumes/ecommerce/bronze/raw_files"
+customer_data = []
+for i in range(1, 501):
+    customer_data.append({
+        "customer_id": f"CUST-{i:04d}",
+        "customer_name": f"Customer_{i}",
+        "email": f"customer{i}@example.com",
+        "signup_date": (datetime(2022, 1, 1) + timedelta(days=random.randint(0, 730))).strftime("%Y-%m-%d"),
+        "tier": random.choice(["bronze", "silver", "gold", "platinum"]),
+        "city": random.choice(["Mumbai", "Delhi", "Bangalore", "Chennai", "Hyderabad"]),
+        "is_active": random.choice([True, True, True, False])
+    })
+customers_df = spark.createDataFrame(customer_data)
+customers_df.write.mode("overwrite").option("header", "true").csv(f"{volume_path}/customers/")
+
+
+# COMMAND ----------
+
+from datetime import datetime, timedelta
+import random
+
+# 3. Generate Customers (500 rows)
+volume_path = "/Volumes/ecommerce/bronze/raw_files"
+
+# 4. Generate CDC Events (200 events)
+cdc_events = []
+for i in range(1, 201):
+    cust_id = f"CUST-{random.randint(1, 500):04d}"
+    op = random.choice(["INSERT", "UPDATE", "UPDATE", "DELETE"])
+    cdc_events.append({
+        "cdc_timestamp": (datetime(2024, 6, 1) + timedelta(hours=random.randint(0, 4000))).strftime("%Y-%m-%d %H:%M:%S"),
+        "operation": op,
+        "customer_id": cust_id,
+        "customer_name": f"Customer_{cust_id.split('-')[1]}_v2" if op == "UPDATE" else f"Customer_{cust_id.split('-')[1]}",
+        "email": f"updated_{cust_id.split('-')[1]}@example.com" if op == "UPDATE" else f"customer{cust_id.split('-')[1]}@example.com",
+        "tier": random.choice(["bronze", "silver", "gold", "platinum"]),
+        "city": random.choice(["Mumbai", "Delhi", "Bangalore", "Chennai"]),
+        "is_active": op != "DELETE"
+    })
+cdc_df = spark.createDataFrame(cdc_events)
+cdc_df.write.mode("overwrite").option("header", "true").csv(f"{volume_path}/customer_cdc/")
 
