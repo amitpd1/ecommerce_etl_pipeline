@@ -17,6 +17,7 @@ def silver_orders_cleaned():
             .withColumn("order_date", to_date(col("order_date"), "yyyy-MM-dd"))
             .withColumn("order_year", year(col("order_date")))
             .withColumn("order_month", month(col("order_date")))
+            .withColumn("quantity", col("quantity").cast("int"))
             )
 #
 @dp.materialized_view(
@@ -37,7 +38,7 @@ def silver_customers_cleaned():
             .withColumn("is_active", F.lit("true"))
             )
     
-@dp.table(name="silver.customer_cdc")
+@dp.temporary_view(name="customer_cdc")
 def prepare_cdc():
     return spark.readStream.table("ecommerce.bronze.customer_cdc_raw") \
         .withColumn("signup_date", F.lit(None).cast("date"))    
@@ -67,7 +68,7 @@ dp.create_auto_cdc_flow(
 # Step 3: Apply incremental CDC
 dp.create_auto_cdc_flow(
     target = "silver.customers_stream",
-    source = "silver.customer_cdc",
+    source = "customer_cdc",
     keys = ["customer_id"],
     sequence_by = "cdc_timestamp",
     apply_as_deletes = "operation = 'DELETE'", 
